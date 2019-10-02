@@ -2,13 +2,32 @@ package main
 
 import (
 	"os"
-	"fmt"
+	//"fmt"
 	"io/ioutil"
 	"image/color"
-	png "image/png"
-    //"reflect"
+	"image/png"
+	//"reflect"
+    "encoding/csv"
     "log"
 )
+
+func PngTo01InString(fileName string) string {
+	file, _ := os.Open(fileName)
+	defer file.Close()
+	pngImage, _ := png.Decode(file)
+	pngString := ""
+	for y := pngImage.Bounds().Min.Y; y < pngImage.Bounds().Max.Y; y++ {
+		for x := pngImage.Bounds().Min.X; x < pngImage.Bounds().Max.X; x++ {	
+			c := color.GrayModel.Convert(pngImage.At(x, y)).(color.Gray)
+			if c.Y >= 10 {
+				pngString += "1"
+			} else {
+				pngString += "0"
+			}
+		}
+	}
+	return pngString
+}
 
 func main() {
 	targetDir := "Japanese Handwritten Digits"
@@ -16,47 +35,23 @@ func main() {
     if err != nil {
         log.Fatal(err)
     }
-	i := 0
     for _, catalog := range catalogs {
 		if !catalog.IsDir() {
 			continue
-		}
-		
+		}		
 		dirName := (targetDir + "\\" + catalog.Name())
-
-		
 		files, _ := ioutil.ReadDir(dirName)
+		pngStrings := make([]string, 0)
 		for _, fileInfo := range files {
 			if fileInfo.IsDir() {
 				continue
 			}
-
-			file, _ := os.Open(dirName + "\\" + fileInfo.Name())
-			pngImage, _ := png.Decode(file)
-			file.Close()
-			
-			levels := []string{" ", "█", "█", "█", "█"}
-			for y := pngImage.Bounds().Min.Y; y < pngImage.Bounds().Max.Y; y++ {
-				for x := pngImage.Bounds().Min.X; x < pngImage.Bounds().Max.X; x++ {
-					c := color.GrayModel.Convert(pngImage.At(x, y)).(color.Gray)
-					level := c.Y / 51 // 51 * 5 = 255
-					if level == 5 {
-						level--
-					}
-					fmt.Print(levels[level])
-				}
-				fmt.Print("\n")
-			}
-
-			/*body, _ := ioutil.ReadFile(dirName + "\\" + fileInfo.Name())
-			fmt.Println(body)*/
-
-
-			break	
+			pngStrings =  append( pngStrings, PngTo01InString(dirName + "\\" + fileInfo.Name()))
 		}
-		i++
-		if i > 9 {
-			return
-		}
+		fileCsv, _ := os.Create(catalog.Name() + ".csv")
+		writer := csv.NewWriter(fileCsv)
+		writer.Write(pngStrings);
+		writer.Flush()
+		fileCsv.Close()
     }
 }
