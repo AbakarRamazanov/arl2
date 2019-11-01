@@ -63,7 +63,7 @@ func main() {
 	var number int
 	str2 := PngTo01InString(os.Args[1])
 	for i := 0; i < 10; i++ {
-		sumArray[i] = sHemmingForClassFromCSV(("CSVs\\" + strconv.Itoa(i) + ".csv"), str2)
+		sumArray[i] = sHemmingForClassFromCSV(("CSVs" + string(os.PathSeparator) + strconv.Itoa(i) + ".csv"), str2)
 		// return
 	}
 	for i := 0; i < 10; i++ {
